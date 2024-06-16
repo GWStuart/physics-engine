@@ -10,9 +10,31 @@ class Engine:
         self.length, self.height = win.get_size()
         self.points = []
         self.sticks = []
+        self.cloths = []
+        self.rectangles = []
 
     def add_point(self, *args, **kwargs):
         self.points.append(Point(*args, **kwargs))
+
+    def add_cloth(self, *args, **kwargs):
+        cloth = Cloth(*args, **kwargs)
+        self.cloths.append(cloth)
+
+        for point in cloth.points:
+            self.points.append(point)
+
+        for stick in cloth.sticks:
+            self.sticks.append(stick)
+
+    def add_rectangle(self, *args, **kwargs):
+        rect = Rectangle(*args, **kwargs)
+        self.rectangles.append(rect)
+
+        for point in rect.points:
+            self.points.append(point)
+
+        for stick in rect.sticks:
+            self.sticks.append(stick)
 
     def update(self):
         for point in self.points:
@@ -24,7 +46,7 @@ class Engine:
                 stick.update()
 
             for point in self.points:
-                if not point.pinned:
+                if not point.pinned and not point.ghost:
                     point.constrain(self.points, self.length, self.height)
 
     def render(self):
@@ -43,7 +65,7 @@ class Point:
     GRAVITY = 0.5
     FRICTION = 0.999
 
-    def __init__(self, pos, vel=None, pinned=False):
+    def __init__(self, pos, vel=None, pinned=False, ghost=False):
         self.x, self.y = pos
 
         if vel:
@@ -52,6 +74,7 @@ class Point:
             self.oldx, self.oldy = (pos[0], pos[1]) 
 
         self.pinned = pinned
+        self.ghost = ghost
         self.r = 10
 
     def update(self):
@@ -97,7 +120,12 @@ class Point:
 
 
     def render(self, win):
-        pygame.draw.circle(win, (255, 255, 255), (self.x, self.y), self.r)
+        if self.pinned:
+            colour = (255, 0, 0)
+        else:
+            colour = (255, 255, 255)
+
+        pygame.draw.circle(win, colour, (self.x, self.y), self.r)
 
 class Stick:
     WIDTH = 3
@@ -128,15 +156,45 @@ class Stick:
 
 
 class Cloth:
-    def __init__(self, pos, length, height, density=50):
+    def __init__(self, pos, length, height, density=50, ghost=False):
         self.pos = pos
-        self.length = length
-        self.height = height
+        self.columns = length // density
+        self.rows = height // density
         self.density = density
-        
-        self.points = [Point((pos[0] + density*i, pos[1] + density*j)) for i in range(length // density) for j in range(height // density)]
+        self.ghost = ghost
+
+        self.points = [Point((pos[0] + density*i, pos[1] + density*j), ghost=ghost) for i in range(self.columns) for j in range(self.rows)]
+
+        self.sticks = []
+        for row in range(self.columns):
+            for column in range(self.rows):
+                index = column + row * self.rows
+                point = self.points[index]
+
+                if column == 0:
+                    point.pinned = True
+
+                if row != self.columns - 1:
+                    self.sticks.append(Stick(point, self.points[index + self.rows]))
+                if column != self.rows - 1:
+                    self.sticks.append(Stick(point, self.points[index + 1]))
+        print(len(self.sticks))
+
+    def update(self):
+        pass
     
     def render(self, win):
         for point in self.points:
             point.render(win)
+
+
+class Rectangle:
+    def __init__(self, pos, length, height):
+        self.pos = pos
+        self.length = length
+        self.height = height
+
+        self.points = [Point(pos), Point((pos[0] + length, pos[1])), Point((pos[0] + length, pos[1] + height)), Point((pos[0], pos[1] + height))]
+        self.sticks = [Stick(self.points[0], self.points[1]), Stick(self.points[1], self.points[2]), Stick(self.points[2], self.points[3]), Stick(self.points[0], self.points[3]), Stick(self.points[0], self.points[2])]
+
 

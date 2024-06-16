@@ -9,7 +9,6 @@ pygame.display.set_caption("Verlet Integration")
 
 clock = pygame.time.Clock()
 
-RIGIDNESS = 5 
 
 def render():
     win.fill((30, 30, 30))
@@ -28,6 +27,8 @@ sticks = [] # [Stick(points[0], points[1])]
 # cloth = Cloth((100, 100), 500, 300)
 
 engine = Engine(win)
+engine.add_cloth((100, 100), 500, 300, ghost=True)
+# engine.add_rectangle((100, 100), 100, 100)
 
 tick = 0
 
