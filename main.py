@@ -1,7 +1,7 @@
 import pygame
 import random
 import math
-from engine import *
+from engine import Engine 
 
 LENGTH, HEIGHT = 800, 600
 win = pygame.display.set_mode((LENGTH, HEIGHT), pygame.RESIZABLE)
@@ -11,27 +11,11 @@ clock = pygame.time.Clock()
 
 RIGIDNESS = 5 
 
-
-def update():
-    for point in points:
-        if not point.pinned:
-            point.update()
-    
-    for _ in range(RIGIDNESS):
-        for stick in sticks:
-            stick.update()
-
-        constrain_points(points)
-
-
 def render():
     win.fill((30, 30, 30))
 
-    for point in points:
-        point.render(win)
-
-    for stick in sticks:
-        stick.render(win)
+    engine.render()
+    # cloth.render(win)
 
     pygame.display.update()
 
@@ -39,8 +23,11 @@ def render():
 # points = [Point((300, 200), pinned=True), Point((300, 400)), Point((400, 200)), Point((400, 400))]
 # sticks = [Stick(points[0], points[1]), Stick(points[0], points[2]), Stick(points[3], points[2]), Stick(points[3], points[1]), Stick(points[0], points[3])]
 
-points = [Point((300, 200), vel=(3, 0)), Point((300, 150))] # , Point((300, 100))]
+points = [] # [Point((300, 200), vel=(3, 0)), Point((300, 150))] # , Point((300, 100))]
 sticks = [] # [Stick(points[0], points[1])]
+# cloth = Cloth((100, 100), 500, 300)
+
+engine = Engine(win)
 
 tick = 0
 
@@ -53,12 +40,13 @@ while run:
             run = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse = pygame.mouse.get_pos()
-            points.append(Point(mouse))
+            engine.add_point(mouse)
         elif event.type == pygame.VIDEORESIZE:
             LENGTH, HEIGHT = win.get_size()
-            update_dimensions(LENGTH, HEIGHT)
+            engine.update_dimensions()
     
-    update()
+    engine.update()
+
     render()
     clock.tick(60)
 
