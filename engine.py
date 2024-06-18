@@ -65,7 +65,7 @@ class Point:
     GRAVITY = 0.5
     FRICTION = 0.999
 
-    def __init__(self, pos, vel=None, pinned=False, ghost=False):
+    def __init__(self, pos, vel=None, pinned=False, ghost=False, r=None):
         self.x, self.y = pos
 
         if vel:
@@ -75,7 +75,10 @@ class Point:
 
         self.pinned = pinned
         self.ghost = ghost
-        self.r = 10
+        if r:
+            self.r = r
+        else:
+            self.r = 10
 
     def update(self):
         vx = (self.x - self.oldx) * self.FRICTION

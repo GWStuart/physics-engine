@@ -9,7 +9,8 @@ pygame.display.set_caption("Verlet Integration")
 
 clock = pygame.time.Clock()
 
-RADIUS = 15
+radius = 10
+BUFFER = 5
 
 
 def render():
@@ -19,15 +20,13 @@ def render():
 
     if pressed:
         mouse = pygame.mouse.get_pos()
-        if math.dist(pressed, mouse) > RADIUS:
+        pygame.draw.circle(win, (255, 255, 255), pressed, radius)
+        if math.dist(pressed, mouse) > radius + BUFFER:
             pygame.draw.line(win, (255, 0, 0), pressed, mouse, 3)
 
     pygame.display.update()
 
 engine = Engine(win)
-
-points = []
-sticks = []
 
 tick = 0
 
@@ -44,19 +43,22 @@ while run:
         elif event.type == pygame.VIDEORESIZE:
             LENGTH, HEIGHT = win.get_size()
             engine.update_dimensions()
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pressed = pygame.mouse.get_pos() 
 
-        elif event.type == pygame.MOUSEBUTTONUP:
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             mouse = pygame.mouse.get_pos()
-            if math.dist(pressed, mouse) < RADIUS:
-                engine.add_point(pressed)
+            if math.dist(pressed, mouse) < radius + BUFFER:
+                engine.add_point(pressed, r=radius)
             else:
-                print("firing")
                 vel = ((pressed[0] - mouse[0]) / 10, (pressed[1] - mouse[1]) / 10)
-                engine.add_point(pressed, vel=vel)
+                engine.add_point(pressed, vel=vel, r=radius)
 
             pressed = None
+            radius = 10  # reset radius
+
+        elif event.type == pygame.MOUSEWHEEL:
+            radius += event.y
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
