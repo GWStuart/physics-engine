@@ -3,7 +3,7 @@ import pygame
 
 
 class Engine:
-    RIGIDNESS = 5
+    RIGIDNESS = 5 
 
     def __init__(self, win):
         self.win = win

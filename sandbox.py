@@ -9,7 +9,7 @@ pygame.display.set_caption("Verlet Integration")
 
 clock = pygame.time.Clock()
 
-RADIUS = 50
+RADIUS = 15
 
 
 def render():
@@ -19,7 +19,7 @@ def render():
 
     if pressed:
         mouse = pygame.mouse.get_pos()
-        if math.dist(pressed, mouse) > 10:
+        if math.dist(pressed, mouse) > RADIUS:
             pygame.draw.line(win, (255, 0, 0), pressed, mouse, 3)
 
     pygame.display.update()
@@ -32,6 +32,7 @@ sticks = []
 tick = 0
 
 pressed = None
+update = True
 
 run = True
 while run:
@@ -44,17 +45,25 @@ while run:
             LENGTH, HEIGHT = win.get_size()
             engine.update_dimensions()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            mouse = pygame.mouse.get_pos()
-            engine.add_point(mouse)
-            pressed = pygame.mouse.get_pos()
-              
+            pressed = pygame.mouse.get_pos() 
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            if not math.dist(pressed, pygame.mouse.get_pos()) < RADIUS:
-                print("Fire")
+            mouse = pygame.mouse.get_pos()
+            if math.dist(pressed, mouse) < RADIUS:
+                engine.add_point(pressed)
+            else:
+                print("firing")
+                vel = ((pressed[0] - mouse[0]) / 10, (pressed[1] - mouse[1]) / 10)
+                engine.add_point(pressed, vel=vel)
+
             pressed = None
 
-    # engine.update()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                update = not update 
+    
+    if update:
+        engine.update()
 
     render()
     clock.tick(60)
