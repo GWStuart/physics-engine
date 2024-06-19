@@ -3,7 +3,7 @@ import pygame
 
 
 class Engine:
-    RIGIDNESS = 5 
+    RIGIDNESS = 1 
 
     def __init__(self, win):
         self.win = win
@@ -41,9 +41,10 @@ class Engine:
             if not point.pinned:
                 point.update()
         
+        # self.points.sort(reverse=False, key=lambda point: point.y)
         for _ in range(self.RIGIDNESS):
             for stick in self.sticks:
-                stick.update()
+                 stick.update()
 
             for point in self.points:
                 if not point.pinned and not point.ghost:
@@ -61,7 +62,7 @@ class Engine:
 
 
 class Point:
-    BOUNCE = 0
+    BOUNCE = 0.3
     GRAVITY = 0.5
     FRICTION = 0.999
 
