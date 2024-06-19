@@ -3,7 +3,7 @@ import pygame
 
 
 class Engine:
-    RIGIDNESS = 1 
+    RIGIDNESS = 5 
 
     def __init__(self, win):
         self.win = win
@@ -14,7 +14,10 @@ class Engine:
         self.rectangles = []
 
     def add_point(self, *args, **kwargs):
-        self.points.append(Point(*args, **kwargs))
+        point = Point(*args, **kwargs)
+        self.points.append(point)
+
+        return point
 
     def add_cloth(self, *args, **kwargs):
         cloth = Cloth(*args, **kwargs)
@@ -38,8 +41,7 @@ class Engine:
 
     def update(self):
         for point in self.points:
-            if not point.pinned:
-                point.update()
+            point.update()
         
         # self.points.sort(reverse=False, key=lambda point: point.y)
         for _ in range(self.RIGIDNESS):
@@ -47,8 +49,7 @@ class Engine:
                  stick.update()
 
             for point in self.points:
-                if not point.pinned and not point.ghost:
-                    point.constrain(self.points, self.length, self.height)
+                point.constrain(self.points, self.length, self.height)
 
     def render(self):
         for point in self.points:
@@ -66,7 +67,7 @@ class Point:
     GRAVITY = 0.5
     FRICTION = 0.999
 
-    def __init__(self, pos, vel=None, pinned=False, ghost=False, r=None):
+    def __init__(self, pos, vel=None, pinned=False, ghost=False, r=10, hidden=False):
         self.x, self.y = pos
 
         if vel:
@@ -76,12 +77,13 @@ class Point:
 
         self.pinned = pinned
         self.ghost = ghost
-        if r:
-            self.r = r
-        else:
-            self.r = 10
+        self.r = r
+        self.hidden = hidden
 
     def update(self):
+        if self.pinned:
+            return
+
         vx = (self.x - self.oldx) * self.FRICTION
         vy = (self.y - self.oldy) * self.FRICTION
         self.oldx, self.oldy = self.x, self.y
@@ -91,11 +93,14 @@ class Point:
         self.y += self.GRAVITY
     
     def constrain(self, points, max_len, max_height):
+        if self.pinned or self.ghost:
+            return
+
         vx = (self.x - self.oldx) * self.FRICTION
         vy = (self.y - self.oldy) * self.FRICTION
 
         for point in points:
-            if point != self:
+            if point != self and not point.ghost:
                 dist = math.dist((self.x, self.y), (point.x, point.y))
                 if dist == 0:
                     dist += 0.000001
@@ -103,11 +108,15 @@ class Point:
                     dx = point.x - self.x
                     dy = point.y - self.y
                     difference = (self.r + point.r - dist) / dist / 2
-                    
-                    point.x += dx * difference
-                    point.y += dy * difference
-                    self.x -= dx * difference
-                    self.y -= dy * difference
+
+                    if point.pinned:
+                        self.x -= dx * difference * 2
+                        self.y -= dy * difference * 2
+                    else:
+                        point.x += dx * difference
+                        point.y += dy * difference
+                        self.x -= dx * difference
+                        self.y -= dy * difference
 
         if self.x > max_len - self.r:
             self.x = max_len - self.r
@@ -124,6 +133,9 @@ class Point:
 
 
     def render(self, win):
+        if self.hidden:
+            return
+
         if self.pinned:
             colour = (255, 0, 0)
         else:
