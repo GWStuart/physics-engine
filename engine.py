@@ -29,6 +29,12 @@ class Engine:
         for stick in cloth.sticks:
             self.sticks.append(stick)
 
+    def add_stick(self, *args, **kwargs):
+        stick = Stick(*args, **kwargs)
+        self.sticks.append(stick)
+
+        return stick
+
     def add_rectangle(self, *args, **kwargs):
         rect = Rectangle(*args, **kwargs)
         self.rectangles.append(rect)
@@ -38,6 +44,12 @@ class Engine:
 
         for stick in rect.sticks:
             self.sticks.append(stick)
+
+    def clear_all(self):
+        self.points = []
+        self.sticks = []
+        self.cloths = []
+        self.rectangle = []
 
     def update(self):
         for point in self.points:
@@ -52,11 +64,11 @@ class Engine:
                 point.constrain(self.points, self.length, self.height)
 
     def render(self):
-        for point in self.points:
-            point.render(self.win)
-
         for stick in self.sticks:
             stick.render(self.win)
+
+        for point in self.points:
+            point.render(self.win)
         
     def update_dimensions(self):
         self.length, self.height = self.win.get_size()
