@@ -50,6 +50,13 @@ class Engine:
         self.cloths = []
         self.rectangle = []
 
+    def get_point(self, x, y):
+        # return the point that overlaps the coordinates (x, y)
+        # if there was not point then it return none
+        for point in self.points:
+            if math.dist((x, y), (point.x, point.y)) <= point.r:
+                return point
+
     def update(self):
         for point in self.points:
             point.update()
