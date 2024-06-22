@@ -26,3 +26,5 @@ Creates a force-field type area around your mouse
 
 **Other general keybinds**
 - `SPACE` toggles the physics
+- `s` save the current sandbox 
+- `o` open a saved sandbox

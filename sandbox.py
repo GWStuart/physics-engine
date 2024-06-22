@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 from engine import Engine 
+from tkinter import filedialog
+import pickle
 pygame.init()
 
 LENGTH, HEIGHT = 800, 600
@@ -22,7 +24,7 @@ BUFFER = 5
 def render():
     win.fill((30, 30, 30))
 
-    engine.render()
+    engine.render(win)
 
     if mode == 1 and pressed:
         mouse = pygame.mouse.get_pos()
@@ -62,7 +64,7 @@ def render():
 # def get_point(x, y):
 
 
-engine = Engine(win)
+engine = Engine(LENGTH, HEIGHT)
 cursor_point = engine.add_point((-10, -10), pinned=True, hidden=True)
 render_cursor_point = True
 
@@ -87,7 +89,7 @@ while run:
             run = False
         elif event.type == pygame.VIDEORESIZE:
             LENGTH, HEIGHT = win.get_size()
-            engine.update_dimensions()
+            engine.update_dimensions(LENGTH, HEIGHT)
         if mode == 1 and event.type == pygame.MOUSEBUTTONDOWN:
             mouse = pygame.mouse.get_pos()
             if event.button == 1:
@@ -160,6 +162,16 @@ while run:
             elif event.key == pygame.K_c:
                 engine.clear_all()
                 cursor_point = engine.add_point((-10, -10), pinned=True, hidden=True)
+            elif event.key == pygame.K_s:
+                file_path = filedialog.asksaveasfilename(defaultextension=".physics")
+                if file_path:
+                    with open(file_path, "wb") as f:
+                        pickle.dump(engine, f)
+            elif event.key == pygame.K_o:
+                file_path = filedialog.askopenfilename()
+                if file_path:
+                    with open(file_path, "rb") as f:
+                        engine = pickle.load(f)
             elif 48 <= event.key <= 57: 
                 if mode == 2:
                     cursor_point.x, cursor_point.y = -30, -30

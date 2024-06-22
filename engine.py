@@ -5,9 +5,8 @@ import pygame
 class Engine:
     RIGIDNESS = 5 
 
-    def __init__(self, win):
-        self.win = win
-        self.length, self.height = win.get_size()
+    def __init__(self, length, height):
+        self.length, self.height = length, height 
         self.points = []
         self.sticks = []
         self.cloths = []
@@ -63,15 +62,15 @@ class Engine:
             for point in self.points:
                 point.constrain(self.points, self.length, self.height)
 
-    def render(self):
+    def render(self, win):
         for stick in self.sticks:
-            stick.render(self.win)
+            stick.render(win)
 
         for point in self.points:
-            point.render(self.win)
+            point.render(win)
         
-    def update_dimensions(self):
-        self.length, self.height = self.win.get_size()
+    def update_dimensions(self, length, height):
+        self.length, self.height = length, height 
 
 
 class Point:
