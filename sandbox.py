@@ -37,6 +37,14 @@ def render():
     if mode == 2 and render_cursor_point:
         pygame.draw.circle(win, (255, 0, 0), (cursor_point.x, cursor_point.y), cursor_point.r, 1)
 
+    if mode == 3 and chosen_point:
+        colour = (255, 0, 0) if chosen_pinned else (255, 255, 255)
+        pygame.draw.circle(win, colour, (chosen_point.x, chosen_point.y), chosen_point.r)
+
+    if mode == 5 and line:
+        mouse = pygame.mouse.get_pos()
+        pygame.draw.line(win, (255, 0, 0), line, mouse, 1)
+
     if show_info:
         win.blit(title, (10, 10))
         win.blit(sub_title, (10, 30))
@@ -64,6 +72,8 @@ pressed = None
 update = True
 show_info = True
 line = None
+chosen_point = None
+chosen_pinned = None
 
 mode = 1
 modes = {1: "normal", 2: "mouse field", 3: "drag", 4: "cloth", 5: "cut"}
@@ -92,7 +102,27 @@ while run:
                     if math.dist(mouse, (point.x, point.y)) < point.r:
                         point.pinned = not point.pinned
                         break
-
+        elif mode == 3 and event.type == pygame.MOUSEBUTTONDOWN:
+            mouse = pygame.mouse.get_pos()
+            for point in engine.points:
+                if math.dist(mouse, (point.x, point.y)) < point.r:
+                    chosen_point = point
+                    chosen_pinned = chosen_point.pinned
+                    chosen_point.pinned = True
+                    chosen_point.hidden = True
+        elif mode == 3 and event.type == pygame.MOUSEBUTTONUP and chosen_point:
+            chosen_point.pinned = chosen_pinned
+            chosen_point.hidden = False
+            mouse = pygame.mouse.get_pos()
+            chosen_point.oldx, chosen_point.oldy = chosen_point.x, chosen_point.y 
+            chosen_point.x, chosen_point.y = mouse
+            chosen_point = None
+            chosen_pinned = None
+        elif mode == 5 and event.type == pygame.MOUSEBUTTONDOWN:
+            mouse = pygame.mouse.get_pos()
+            line = mouse
+        elif mode == 5 and event.type == pygame.MOUSEBUTTONUP:
+            line = None
         elif mode == 1 and event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             if pressed:
                 mouse = pygame.mouse.get_pos()
@@ -135,11 +165,16 @@ while run:
                     cursor_point.x, cursor_point.y = -30, -30
                     cursor_point.r = 10 
                     render_cursor_point = True
+                if mode == 1:
+                    line = None
                 mode = event.key - 48
     
+    if mode == 2:
+        cursor_point.x, cursor_point.y = pygame.mouse.get_pos()
+    if mode == 3 and chosen_point:
+        chosen_point.x, chosen_point.y = pygame.mouse.get_pos()
+ 
     if update:
-        if mode == 2:
-            cursor_point.x, cursor_point.y = pygame.mouse.get_pos()
         engine.update()
 
     render()
