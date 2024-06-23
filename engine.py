@@ -9,8 +9,13 @@ class Engine:
         self.length, self.height = length, height 
         self.points = []
         self.sticks = []
-        # self.cloths = []
-        self.rectangles = []
+        self.lines = []
+
+    def add_line(self, *args, **kwargs):
+        line = Line(*args, **kwargs)
+        self.lines.append(line)
+
+        return line
 
     def add_point(self, *args, **kwargs):
         point = Point(*args, **kwargs)
@@ -57,6 +62,26 @@ class Engine:
             if math.dist((x, y), (point.x, point.y)) <= point.r:
                 return point
 
+    def stick_line_intersection(self, p1, p2):
+        # Finds the stick that intersects a line from p1 to p2
+        collisions = []
+ 
+        for stick in self.sticks:
+            x1, y1 = p1
+            x2, y2 = p2
+            x3, y3 = stick.p1.x, stick.p1.y
+            x4, y4 = stick.p2.x, stick.p2.y
+
+            a = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+            b = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+            if 0 <= a <= 1 and 0 <= b <= 1:
+                collisions.append(stick)
+
+        return collisions
+
+    def remove_stick(self, stick):
+        self.sticks.remove(stick)
+
     def update(self):
         for point in self.points:
             point.update()
@@ -67,9 +92,12 @@ class Engine:
                  stick.update()
 
             for point in self.points:
-                point.constrain(self.points, self.length, self.height)
+                point.constrain(self.points, self.length, self.height, self.lines)
 
     def render(self, win):
+        for line in self.lines:
+            line.render(win)
+
         for stick in self.sticks:
             stick.render(win)
 
@@ -110,13 +138,14 @@ class Point:
         self.y += vy
         self.y += self.GRAVITY
     
-    def constrain(self, points, max_len, max_height):
+    def constrain(self, points, max_len, max_height, lines):
         if self.pinned or self.ghost:
             return
 
         vx = (self.x - self.oldx) * self.FRICTION
         vy = (self.y - self.oldy) * self.FRICTION
-
+        
+        # check for point collisions and constrain if necessary
         for point in points:
             if point != self and not point.ghost:
                 dist = math.dist((self.x, self.y), (point.x, point.y))
@@ -136,6 +165,11 @@ class Point:
                         self.x -= dx * difference
                         self.y -= dy * difference
 
+        for line in lines:
+            if line.intersect_point(self):
+                self.x, self.y = self.oldx, self.oldy
+        
+        # check for border collisions and constrain if necessary
         if self.x > max_len - self.r:
             self.x = max_len - self.r
             self.oldx = self.x + vx * self.BOUNCE
@@ -148,7 +182,6 @@ class Point:
         elif self.y < self.r:
             self.y = self.r
             self.oldy = self.y + vy * self.BOUNCE
-
 
     def render(self, win):
         if self.hidden:
@@ -190,14 +223,12 @@ class Stick:
 
 
 class Cloth:
-    def __init__(self, pos, length, height, density=50, ghost=False):
-        self.pos = pos
+    def __init__(self, pos, length, height, density=50, ghost=False, hidden=False):
         self.columns = length // density + 1
         self.rows = height // density + 1
-        self.density = density
-        self.ghost = ghost
 
-        self.points = [Point((pos[0] + density*i, pos[1] + density*j), ghost=ghost) for i in range(self.columns) for j in range(self.rows)]
+        self.points = [Point((pos[0] + density*i, pos[1] + density*j), ghost=ghost, hidden=hidden) 
+            for i in range(self.columns) for j in range(self.rows)]
 
         self.sticks = []
         for row in range(self.columns):
@@ -213,13 +244,6 @@ class Cloth:
                 if column != self.rows - 1:
                     self.sticks.append(Stick(point, self.points[index + 1]))
 
-    def update(self):  # NOT IN USE
-        pass
-    
-    def render(self, win):  # NOT IN USE
-        for point in self.points:
-            point.render(win)
-
 
 class Rectangle:
     def __init__(self, pos, length, height):
@@ -230,4 +254,26 @@ class Rectangle:
         self.points = [Point(pos), Point((pos[0] + length, pos[1])), Point((pos[0] + length, pos[1] + height)), Point((pos[0], pos[1] + height))]
         self.sticks = [Stick(self.points[0], self.points[1]), Stick(self.points[1], self.points[2]), Stick(self.points[2], self.points[3]), Stick(self.points[0], self.points[3]), Stick(self.points[0], self.points[2])]
 
+
+class Line:
+    # A line is an immovable barrier that constrains points
+    def __init__(self, p1, p2, width=11):
+        self.p1 = p1
+        self.p2 = p2
+        self.width = width
+
+    def render(self, win):
+        pygame.draw.line(win, (255, 255, 255), self.p1, self.p2, self.width)
+        pygame.draw.circle(win, (255, 255, 255), self.p1, self.width // 2)
+        pygame.draw.circle(win, (255, 255, 255), self.p2, self.width // 2)
+
+    def intersect_point(self, point):
+        x1, y1 = point.x, point.y 
+        x2, y2 = point.oldx, point.oldy 
+        x3, y3 = self.p1[0], self.p1[1] 
+        x4, y4 = self.p2[0], self.p2[1] 
+
+        a = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+        b = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+        return 0 <= a <= 1 and 0 <= b <= 1
 
