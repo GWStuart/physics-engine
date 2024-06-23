@@ -9,7 +9,7 @@ class Engine:
         self.length, self.height = length, height 
         self.points = []
         self.sticks = []
-        self.cloths = []
+        # self.cloths = []
         self.rectangles = []
 
     def add_point(self, *args, **kwargs):
@@ -20,7 +20,7 @@ class Engine:
 
     def add_cloth(self, *args, **kwargs):
         cloth = Cloth(*args, **kwargs)
-        self.cloths.append(cloth)
+        # self.cloths.append(cloth)
 
         for point in cloth.points:
             self.points.append(point)
@@ -47,7 +47,7 @@ class Engine:
     def clear_all(self):
         self.points = []
         self.sticks = []
-        self.cloths = []
+        # self.cloths = []
         self.rectangle = []
 
     def get_point(self, x, y):
@@ -192,8 +192,8 @@ class Stick:
 class Cloth:
     def __init__(self, pos, length, height, density=50, ghost=False):
         self.pos = pos
-        self.columns = length // density
-        self.rows = height // density
+        self.columns = length // density + 1
+        self.rows = height // density + 1
         self.density = density
         self.ghost = ghost
 
@@ -212,12 +212,11 @@ class Cloth:
                     self.sticks.append(Stick(point, self.points[index + self.rows]))
                 if column != self.rows - 1:
                     self.sticks.append(Stick(point, self.points[index + 1]))
-        print(len(self.sticks))
 
-    def update(self):
+    def update(self):  # NOT IN USE
         pass
     
-    def render(self, win):
+    def render(self, win):  # NOT IN USE
         for point in self.points:
             point.render(win)
 

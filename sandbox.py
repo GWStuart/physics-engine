@@ -57,6 +57,15 @@ def render():
     if mode == 3 and render_cursor_point:
         pygame.draw.circle(win, (255, 0, 0), (cursor_point.x, cursor_point.y), cursor_point.r, 1)
 
+    if mode == 4 and mouse_coords:
+        mouse = pygame.mouse.get_pos()
+        pygame.draw.line(win, (200, 200, 200), mouse_coords, (mouse_coords[0], mouse[1]), 1)
+        pygame.draw.line(win, (200, 200, 200), mouse_coords, (mouse[0], mouse_coords[1]), 1)
+        pygame.draw.line(win, (200, 200, 200), mouse, (mouse[0], mouse_coords[1]), 1)
+        pygame.draw.line(win, (200, 200, 200), mouse, (mouse_coords[0], mouse[1]), 1)
+        pygame.draw.circle(win, (0, 255, 0), mouse_coords, point_radius)
+        pygame.draw.circle(win, (0, 255, 0), mouse, point_radius)
+
     if mode == 5 and mouse_coords:
         mouse = pygame.mouse.get_pos()
         pygame.draw.line(win, (255, 0, 0), mouse_coords, mouse, 1)
@@ -144,6 +153,16 @@ while run:
                 chosen_point.x, chosen_point.y = mouse
                 chosen_point = None
                 chosen_pinned = None
+        
+        elif mode == 4:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse = pygame.mouse.get_pos()
+                if mouse_coords:
+                    engine.add_cloth(mouse_coords, mouse[0] - mouse_coords[0], mouse[1] - mouse_coords[1])
+                    # density = 50 is default
+                    mouse_coords = None
+                else:
+                    mouse_coords = mouse
 
         elif mode == 5:
             if event.type == pygame.MOUSEBUTTONDOWN:
