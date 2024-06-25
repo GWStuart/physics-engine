@@ -62,6 +62,13 @@ class Engine:
             if math.dist((x, y), (point.x, point.y)) <= point.r:
                 return point
 
+    def remove_point(self, point):
+        for stick in self.sticks:
+            if stick.p1 == point or stick.p2 == point:
+                self.sticks.remove(stick)
+
+        self.points.remove(point)
+
     def stick_line_intersection(self, p1, p2):
         # Finds the stick that intersects a line from p1 to p2
         collisions = []
@@ -71,9 +78,16 @@ class Engine:
             x2, y2 = p2
             x3, y3 = stick.p1.x, stick.p1.y
             x4, y4 = stick.p2.x, stick.p2.y
+            
+            d = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1)
+            if d == 0:
+                print("IF SOMETHING BREAKS CHECK THIS OUT")
+                # if min(y3, y4) <= y1 and max(y3, y4) >= y1:
+                #     print("possible collision")
+                continue
 
-            a = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
-            b = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+            a = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / d
+            b = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / d 
             if 0 <= a <= 1 and 0 <= b <= 1:
                 collisions.append(stick)
 
@@ -139,6 +153,11 @@ class Point:
         self.y += self.GRAVITY
     
     def constrain(self, points, max_len, max_height, lines):
+        # print("CONSTRAIN")
+        # for line in lines:
+        #     if line.intersect_point(self):
+        #         print("TOUCH")
+
         if self.pinned or self.ghost:
             return
 
@@ -166,8 +185,13 @@ class Point:
                         self.y -= dy * difference
 
         for line in lines:
-            if line.intersect_point(self):
-                self.x, self.y = self.oldx, self.oldy
+            collision = line.intersect_point(self)
+            if collision:
+                print("COLLIDE")
+                while line.intersect_point(self):
+                    self.x += line.nx
+                    self.y += line.ny
+                # self.x, self.y = collision 
         
         # check for border collisions and constrain if necessary
         if self.x > max_len - self.r:
@@ -261,19 +285,29 @@ class Line:
         self.p1 = p1
         self.p2 = p2
         self.width = width
+        length = ((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2) ** 0.5
+        coef = 1 if min(p1, p2, key=lambda x: x[0])[1] < max(p1, p2, key=lambda x: x[0])[1] else -1
+        self.nx = (p2[1] - p1[1]) / length * coef 
+        self.ny = -(p2[0] - p1[0]) / length * coef 
 
     def render(self, win):
         pygame.draw.line(win, (255, 255, 255), self.p1, self.p2, self.width)
-        pygame.draw.circle(win, (255, 255, 255), self.p1, self.width // 2)
-        pygame.draw.circle(win, (255, 255, 255), self.p2, self.width // 2)
+        # pygame.draw.circle(win, (255, 255, 255), self.p1, self.width // 2)
+        # pygame.draw.circle(win, (255, 255, 255), self.p2, self.width // 2)
 
     def intersect_point(self, point):
         x1, y1 = point.x, point.y 
         x2, y2 = point.oldx, point.oldy 
-        x3, y3 = self.p1[0], self.p1[1] 
-        x4, y4 = self.p2[0], self.p2[1] 
+        x3, y3 = self.p1[0], self.p1[1] - point.r - self.width/2
+        x4, y4 = self.p2[0], self.p2[1] - point.r - self.width/2
 
-        a = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
-        b = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
-        return 0 <= a <= 1 and 0 <= b <= 1
+        d = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1)
+        if d == 0:  # This means that there is a horizontal line
+            print("CHECK OUT IF SOMTHIN BREAKS")
+            return False
+
+        a = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / d
+        b = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / d 
+        if 0 <= a <= 1 and 0 <= b <= 1:
+            return (x1 + a * (x2 - x1)), (y1 + b * (y2 - y1))
 

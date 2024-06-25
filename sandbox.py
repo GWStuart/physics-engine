@@ -19,13 +19,14 @@ sub_title = font_sm.render("(toggle this screen with 'h')", True, (255, 255, 255
 
 ## some variables ##
 mode = 1  # the current game mode (see modes dictionary for their corresponding names)
-modes = {1: "normal", 2: "drag", 3: "mouse field", 4: "cloth", 5: "cut"}
+modes = {1: "normal", 2: "drag", 3: "mouse field", 4: "cloth", 5: "cut", 6: "line"}
 update = True  # whether the physics should update or not (toggled with space)
 show_info = True  # whether info should be shown on the screen or not (toggled with h)
 mouse_coords = None  # used to store the location of a mouse click 
 point_radius = 10  # the default radius of a circle (is defined in more than 1 place)
 chosen_point = None  # stores a point object
 chosen_pinned = None  # records whether the chosen point was pinned or not (used for point dragging)
+render_cursor_point = True  # whether the field around the cursor should be rendered (toggled with f) 
 cloth_density = 50  # the density of the cloth (how closely spaced). Changed with j,k keys
 ghost_cloth = False  # whether the points in the cloth should be ghosts. Toggled with g
 hide_cloth_points = False  # whether the points in a cloth should be rendered. Toggled with p
@@ -34,9 +35,7 @@ CLICK_BUFFER = 5  # A buffer allowing a region where the click can be release wi
 VEL_FACTOR = 10  # The factor by which the points velocity is scaled down (smaller number = more velocity)
 
 engine = Engine(LENGTH, HEIGHT)
-cursor_point = engine.add_point((-10, -10), pinned=True, hidden=True)
-engine.add_line((100, 150), (500, 300))
-render_cursor_point = True
+cursor_point = engine.add_point((-30, -30), pinned=True, hidden=True)
 
 
 def render():
@@ -74,6 +73,10 @@ def render():
         mouse = pygame.mouse.get_pos()
         pygame.draw.line(win, (255, 0, 0), mouse_coords, mouse, 1)
 
+    if mode == 6 and mouse_coords:
+        mouse = pygame.mouse.get_pos()
+        pygame.draw.line(win, (255, 255, 255), mouse_coords, mouse, 10)
+
     if show_info:
         win.blit(title, (10, 10))
         win.blit(sub_title, (10, 30))
@@ -93,6 +96,13 @@ def render():
             win.blit(ghost_msg, (10, 120))
             points_msg = font_sm.render(f"hide cloth points (p): {hide_cloth_points}", True, (255, 255, 255))
             win.blit(points_msg, (10, 140))
+
+    # mouse = pygame.mouse.get_pos()
+    # cursor_point.x, cursor_point.y = mouse
+    # cursor_point.oldx, cursor_point.oldy = mouse[0] + 10, mouse[1] - 50 
+    # for line in engine.lines:
+    #     print(line.intersect_point(cursor_point))
+    # pygame.draw.line(win, (0, 0, 255), (cursor_point.x, cursor_point.y), (cursor_point.oldx, cursor_point.oldy))
 
     pygame.display.update()
 
@@ -187,6 +197,14 @@ while run:
                 for stick in sticks:
                     engine.remove_stick(stick)
                 mouse_coords = None
+
+        elif mode == 6:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if not mouse_coords:
+                    mouse_coords = pygame.mouse.get_pos()
+                else:
+                    engine.add_line(mouse_coords, pygame.mouse.get_pos())
+                    mouse_coords = None
         
         # Check for key presses
         if event.type == pygame.KEYDOWN:
@@ -217,6 +235,11 @@ while run:
                 cloth_density += 1
             elif mode == 4 and event.key == pygame.K_p:
                 hide_cloth_points = not hide_cloth_points
+            elif event.key == pygame.K_DELETE or event.key == pygame.K_BACKSPACE or event.key == pygame.K_x:
+                mouse = pygame.mouse.get_pos()
+                point = engine.get_point(*mouse)
+                if point:
+                    engine.remove_point(point)
             elif 48 <= event.key <= 57: 
                 chosen_point = None
                 mouse_coords = None
