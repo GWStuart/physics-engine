@@ -188,9 +188,16 @@ class Point:
             collision = line.intersect_point(self)
             if collision:
                 print("COLLIDE")
-                while line.intersect_point(self):
+                for i in range(self.r + 5):
+                    if not line.intersect_point(self):
+                        break
                     self.x += line.nx
                     self.y += line.ny
+                else:
+                    self.oldx, self.oldy = self.x, self.y
+                    self.x -= (self.r + 5) * line.nx
+                    self.y -= (self.r + 5) * line.ny
+                    print("BAD")
                 # self.x, self.y = collision 
         
         # check for border collisions and constrain if necessary
@@ -285,17 +292,85 @@ class Line:
         self.p1 = p1
         self.p2 = p2
         self.width = width
+
         length = ((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2) ** 0.5
         coef = 1 if min(p1, p2, key=lambda x: x[0])[1] < max(p1, p2, key=lambda x: x[0])[1] else -1
         self.nx = (p2[1] - p1[1]) / length * coef 
         self.ny = -(p2[0] - p1[0]) / length * coef 
+        
+        self.radius = self.width / 2
+        # if width > 2 and width % 2 == 0:
+        #     print("fast render")
+        # else:
+        #     print("better render")
+        
+        self.render_type = self.better_render  # self.fast_render 
 
     def render(self, win):
+        self.render_type(win)
+
+    def fast_render(self, win):
         pygame.draw.line(win, (255, 255, 255), self.p1, self.p2, self.width)
-        # pygame.draw.circle(win, (255, 255, 255), self.p1, self.width // 2)
-        # pygame.draw.circle(win, (255, 255, 255), self.p2, self.width // 2)
+        pygame.draw.circle(win, (255, 255, 255), self.p1, self.radius)
+        pygame.draw.circle(win, (255, 255, 255), self.p2, self.radius)
+        self.better_render(win)
+
+    def better_render(self, win):
+        a = math.pi if self.p2[0] == self.p1[0] else math.atan((self.p2[1] - self.p1[1]) / (self.p2[0] - self.p1[0])) + math.pi/2
+        cos = self.radius * math.cos(a)  # TODO: not sure if it would be better to round here instead of int
+        sin = self.radius * math.sin(a)
+        pygame.draw.polygon(win, (255, 255, 255), ((self.p1[0] - cos, self.p1[1] - sin), (self.p1[0] + cos, self.p1[1] + sin), (self.p2[0] + cos, self.p2[1] + sin), (self.p2[0] - cos, self.p2[1] - sin)))
+        pygame.draw.circle(win, (255, 255, 255), self.p1, self.radius)
+        pygame.draw.circle(win, (255, 255, 255), self.p2, self.radius)  # / 2
+
+    def xline_x_circle(dot, radius, p1, p2, width):
+        return Collision.xline_x_dot(dot, p1, p2, width + 2*radius)
+        # detects a collision between an xline and a dot
+        d = ((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+        if d == 0:  # if the line has a non-zero length d will be 0 
+            # print("you have a line with no length")
+            return
+        t = ((dot[0] - p1[0]) * (p2[0] - p1[0]) + (dot[1] - p1[1]) * (p2[1] - p1[1])) / d
+        t = max(0, min(1, t))
+        x, y = p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1])
+        return Collision.circle_x_dot(dot, (x, y), width/2)
 
     def intersect_point(self, point):
+        # Optimisations that should be implemented
+        # - perform a bbox check first
+        # - consider whether testing all endpoints is necessary (idk probably is)
+        # - if the line segment from old point pos to current point pos is very tiny then only check collisions with point circles
+        # - idk some kind of efficiency considering very short lines (particularly for the point)
+        # - precompute as much as possible. Even some things that could be stored in the point class maybe
+        p1, p2, w1, p3, p4, w2 = (point.oldx, point.oldy), (point.x, point.y), 2*point.r, self.p1, self.p2, self.width
+
+        d = ((p4[1] - p3[1])*(p2[0] - p1[0]) - (p4[0] - p3[0])*(p2[1] - p1[1]))
+        if d != 0:  # If d == 0 then the lines are parallel (or line has no length)
+            t1 = ((p4[0] - p3[0])*(p1[1] - p3[1]) - (p4[1] - p3[1])*(p1[0] - p3[0])) / d
+            t2 = ((p2[0] - p1[0])*(p1[1] - p3[1]) - (p2[1] - p1[1])*(p1[0] - p3[0])) / d
+
+            if 0 <= t1 <= 1 and 0 <= t2 <= 1:
+                return True
+       
+        # Check collisions with the end points
+        params = [(p1, p3, p4, w1 + w2), (p2, p3, p4, w1 + w2), (p3, p1, p2, w1 + w2), (p4, p1, p2, w1 + w2)]
+        for p in params:
+            if self.intersect_dot(point):
+                return True
+        return False
+
+    def intersect_dot(self, point):
+        dot, p1, p2, width = (point.x, point.y), self.p1, self.p2, self.width
+        d = ((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+        if d == 0:  # if the line has a non-zero length d will be 0
+            print("you have a line with no length")
+            return
+        t = ((dot[0] - p1[0]) * (p2[0] - p1[0]) + (dot[1] - p1[1]) * (p2[1] - p1[1])) / d
+        t = max(0, min(1, t))
+        x, y = p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1])
+        return math.dist(dot, (x, y)) <= width/2
+
+    def _old_intersection_code(self, point):
         x1, y1 = point.x, point.y 
         x2, y2 = point.oldx, point.oldy 
         x3, y3 = self.p1[0], self.p1[1] - point.r - self.width/2
