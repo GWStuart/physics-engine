@@ -38,9 +38,10 @@ class Engine:
 class Point:
     GRAVITY = 0.5
     FRICTION = 0.999
-    HEAT_TRANASFER_RATE = 0.01
-    HEAT_LOSS = 0.97 
-    HEAT_FORCE = 0.01 # 0.00235 
+    HEAT_TRANASFER_RATE = 0.04
+    HEAT_LOSS = 0.95 
+    HEAT_FORCE = 0.008 # 0.00235 
+    NEIGHBOUR_HEAT_LOSS = 0.5  # small = less heat loss
     radius = 10
 
     def __init__(self, pos, heat=0, vel=None):
@@ -56,9 +57,9 @@ class Point:
         # APPLY HEAT!!!
         if self.y >= HEIGHT - self.radius - 10:
             if LENGTH/2 - 70 <= self.x <= LENGTH/2 + 70:
-                self.heat += 15
-                if self.heat > 255:
-                    self.heat = 255
+                self.heat += 100
+                if self.heat > 255 - 30:
+                    self.heat = 255 - 30
 
         # CONTINUE WITH VERLET STUFF
         vx = (self.x - self.oldx) * self.FRICTION
@@ -98,7 +99,10 @@ class Point:
                     self.y -= dy
 
                     heat_dif = (self.heat - point.heat) * self.HEAT_TRANASFER_RATE 
-                    self.heat -= heat_dif
+                    if heat_dif > 0:
+                        self.heat -= heat_dif * self.NEIGHBOUR_HEAT_LOSS 
+                    else:
+                        self.heat -= heat_dif
                     point.heat += heat_dif
         
         if self.x > LENGTH - self.radius:
@@ -111,8 +115,14 @@ class Point:
             self.y = self.radius
 
     def render(self, win):
-        colour = (self.heat, 0, 0)
-        pygame.draw.circle(win, colour, (self.x, self.y), self.radius)
+        # colour = (self.heat, 0, 0)
+        if self.heat < 60:
+            return
+        colour = (30 + self.heat, 30, 30)
+        radius = self.radius
+        # radius = (self.heat / (255 - 30)) * self.radius
+        # radius = (self.heat / (255 - 30))**0.4 * self.radius
+        pygame.draw.circle(win, colour, (self.x, self.y), radius)
 
 
 def render():
@@ -124,7 +134,7 @@ def render():
 engine = Engine()
 
 spacing = 20
-rows = 4  # 8
+rows = 8
 for column in range(6, LENGTH - 6, spacing):
     for row in range(0, rows * spacing, spacing):
         # if row == 0:
