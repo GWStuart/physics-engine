@@ -39,9 +39,9 @@ class Point:
     GRAVITY = 0.5
     FRICTION = 0.999
     HEAT_TRANASFER_RATE = 0.04
-    HEAT_LOSS = 0.95 
-    HEAT_FORCE = 0.008 # 0.00235 
-    NEIGHBOUR_HEAT_LOSS = 0.5  # small = less heat loss
+    HEAT_LOSS = 0.97 
+    HEAT_FORCE = 0.007 # 0.00235 
+    NEIGHBOUR_HEAT_LOSS = 0.3  # small = less heat loss
     radius = 10
 
     def __init__(self, pos, heat=0, vel=None):
@@ -116,12 +116,12 @@ class Point:
 
     def render(self, win):
         # colour = (self.heat, 0, 0)
-        if self.heat < 60:
-            return
+        if self.heat < 50:
+           return
         colour = (30 + self.heat, 30, 30)
-        radius = self.radius
+        # radius = self.radius
         # radius = (self.heat / (255 - 30)) * self.radius
-        # radius = (self.heat / (255 - 30))**0.4 * self.radius
+        radius = (self.heat / (255 - 30))**0.4 * self.radius
         pygame.draw.circle(win, colour, (self.x, self.y), radius)
 
 
