@@ -143,7 +143,7 @@ for column in range(6, LENGTH - 6, spacing):
         engine.add_point((column + 6, HEIGHT - row - 6))
 
 # count = 200
-frame = 0
+# frame = 0
 
 run = True
 while run:
@@ -155,8 +155,8 @@ while run:
         if event.type == pygame.VIDEORESIZE:
             LENGTH, HEIGHT = win.get_size()
         
-    frame += 1
-    frame %= 60 
+    # frame += 1
+    # frame %= 60 
     # if frame % 10 == 0 and count:
     #     engine.add_point((LENGTH/2, HEIGHT/2), vel=(random.uniform(-1, 1), random.uniform(-1, 1)))
     #     count -= 1
@@ -165,6 +165,6 @@ while run:
     render()
     
     clock.tick(60)
-    if not frame:  # 200 balls --> 25-28fps => 27-28fps => 29fps
-        print(clock.get_fps())
+    # if not frame:  # 200 balls --> 25-28fps => 27-28fps => 29fps
+    #     print(clock.get_fps())
 
