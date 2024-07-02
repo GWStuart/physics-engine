@@ -38,10 +38,14 @@ class Engine:
 class Point:
     GRAVITY = 0.5
     FRICTION = 0.999
+    HEAT_TRANASFER_RATE = 0.01
+    HEAT_LOSS = 0.97 
+    HEAT_FORCE = 0.01 # 0.00235 
     radius = 10
 
-    def __init__(self, pos, vel=None):
+    def __init__(self, pos, heat=0, vel=None):
         self.x, self.y = pos
+        self.heat = heat
 
         if vel:
             self.oldx, self.oldy = self.x - vel[0], self.y - vel[1] 
@@ -49,12 +53,25 @@ class Point:
             self.oldx, self.oldy = pos
 
     def update(self):
+        # APPLY HEAT!!!
+        if self.y >= HEIGHT - self.radius - 10:
+            if LENGTH/2 - 70 <= self.x <= LENGTH/2 + 70:
+                self.heat += 15
+                if self.heat > 255:
+                    self.heat = 255
+
+        # CONTINUE WITH VERLET STUFF
         vx = (self.x - self.oldx) * self.FRICTION
         vy = (self.y - self.oldy) * self.FRICTION
         self.oldx, self.oldy = self.x, self.y
 
         self.x += vx
-        self.y += vy + self.GRAVITY
+        self.y += vy + self.GRAVITY - (self.heat * self.HEAT_FORCE) 
+
+        self.heat *= self.HEAT_LOSS
+        # self.heat -= self.HEAT_LOSS # could try a percentage decrease?
+        # if self.heat < 0:
+        #     self.heat = 0
     
     def constrain(self, points):
         vx = (self.x - self.oldx) * self.FRICTION
@@ -79,6 +96,10 @@ class Point:
                     point.y += dy
                     self.x -= dx
                     self.y -= dy
+
+                    heat_dif = (self.heat - point.heat) * self.HEAT_TRANASFER_RATE 
+                    self.heat -= heat_dif
+                    point.heat += heat_dif
         
         if self.x > LENGTH - self.radius:
             self.x = LENGTH - self.radius
@@ -90,7 +111,7 @@ class Point:
             self.y = self.radius
 
     def render(self, win):
-        colour = (255, 255, 255)
+        colour = (self.heat, 0, 0)
         pygame.draw.circle(win, colour, (self.x, self.y), self.radius)
 
 
@@ -103,9 +124,12 @@ def render():
 engine = Engine()
 
 spacing = 20
-rows = 8
+rows = 4  # 8
 for column in range(6, LENGTH - 6, spacing):
     for row in range(0, rows * spacing, spacing):
+        # if row == 0:
+        #     engine.add_point((column + 6, HEIGHT - row - 6), heat=255)
+        # else:
         engine.add_point((column + 6, HEIGHT - row - 6))
 
 # count = 200
