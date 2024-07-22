@@ -227,6 +227,7 @@ while run:
                 if file_path:
                     with open(file_path, "rb") as f:
                         engine = pickle.load(f)
+                        engine.length, engine.height = LENGTH, HEIGHT
             elif mode == 4 and event.key == pygame.K_g:
                 ghost_cloth = not ghost_cloth
             elif mode == 4 and event.key == pygame.K_j:
