@@ -187,7 +187,7 @@ class Point:
         for line in lines:
             collision = line.intersect_point(self)
             if collision:
-                print("COLLIDE")
+                # print("COLLIDE")
                 for i in range(self.r + 5):
                     if not line.intersect_point(self):
                         break
