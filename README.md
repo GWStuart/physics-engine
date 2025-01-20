@@ -12,6 +12,8 @@ You can load some of the demos into the sandbox by pressing `o` and selecting on
 There are a few different modes which you can get to with the number keys
 
 **mode 1**: normal
+![mode 1](https://github.com/user-attachments/assets/31e777a5-9df6-4e89-8db0-e9536af69166)
+
 - click to add balls
 - click and drag to add them with an initial velocity (shown with a red line)
 - use the scroll wheel while the mouse is down to change the size
