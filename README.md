@@ -19,12 +19,28 @@ There are a few different modes which you can get to with the number keys
 - use the scroll wheel while the mouse is down to change the size
 - create a "stick" by clicking one a point and drag and release on another point
 
-**mode 2**: mouse field 
+**mode 2**: drag
+![mode 2](https://github.com/user-attachments/assets/77b41f50-bf4e-4825-ad99-e536a5904c6e)
+
+Allows the user to drag the balls with their mouse
+- hover your mouse over a ball and click and drag to move
+- move the mouse fast to release balls with acceleration
+
+**mode 3**: mouse field
+![mode 3](https://github.com/user-attachments/assets/739bba56-75d0-41d4-a5bc-34cf81ce3fda)
+
 Creates a force-field type area around your mouse
 - change the field size with the scroll wheel
 - toggle whether the field should be rendered or not with `f`
 
-**mode 3**:
+**mode 4 & 5**: cloth simulation and cutting
+![mode 4 5](https://github.com/user-attachments/assets/30cd3d30-3975-4732-88ae-89f0081f884c)
+
+
+Mode 4 allows you to use the simualtion to create a "cloth" and then using mode 5 you can cut this cloth.
+
+**mode 6**: line
+Current work in progress that allows users to draw lines that restrict the movement of the balls. It is already partially implemented but needs some work.
 
 **Other general keybinds**
 - `SPACE` toggles the physics
